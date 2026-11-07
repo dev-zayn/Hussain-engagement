@@ -15,6 +15,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/floral-top.png">
+  <link rel="preload" as="image" href="assets/floral-bottom.png">
+  <link rel="preload" as="image" href="assets/bismillah.jpg">
   <link rel="stylesheet" href="style.css">
   <script>document.documentElement.classList.add("js", "pre-open");</script>
 </head>
@@ -42,22 +45,31 @@
 
   <!-- ========== المظروف ========== -->
   <div class="envelope-scene" id="envelope-scene">
-    <div class="envelope-wrap">
+    <div class="env-stage" id="env-stage">
       <p class="env-kicker">دعوة خاصة</p>
       <p class="env-to" id="env-to" hidden></p>
+
       <div class="envelope" id="envelope" role="button" tabindex="0" aria-label="اضغط لفتح الدعوة">
-        <div class="env-back"></div>
-        <div class="env-card">
-          <img src="assets/bouquet.jpg" alt="">
-          <span class="env-card-name">حسين</span>
-          <small>خطوبة · 14 نوفمبر 2026</small>
+        <!-- الطبقة الخلفية: جسم المظروف + الغطاء بعد فتحه -->
+        <div class="env-layer env-layer-back">
+          <div class="env-back"></div>
+          <div class="env-slot"></div>
+          <div class="env-flap env-flap-back"></div>
         </div>
-        <div class="env-pocket env-pocket-left"></div>
-        <div class="env-pocket env-pocket-right"></div>
-        <div class="env-pocket env-pocket-bottom"></div>
-        <div class="env-flap"></div>
-        <div class="env-seal"><span>ح</span></div>
+
+        <!-- نسخة من البطاقة الحقيقية تخرج من المظروف وتكبر لتصبح الصفحة -->
+        <div class="morph" id="morph" aria-hidden="true"></div>
+
+        <!-- الطبقة الأمامية: الجيوب + الغطاء المغلق + الختم -->
+        <div class="env-layer env-layer-front">
+          <div class="env-pocket env-pocket-left"></div>
+          <div class="env-pocket env-pocket-right"></div>
+          <div class="env-pocket env-pocket-bottom"></div>
+          <div class="env-flap env-flap-front"></div>
+          <div class="env-seal"><span>ح</span></div>
+        </div>
       </div>
+
       <p class="env-hint">اضغط لفتح الدعوة</p>
     </div>
   </div>

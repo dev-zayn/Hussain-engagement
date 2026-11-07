@@ -39,29 +39,145 @@
   }
 
   /* ============================================================
-     المظروف
+     المظروف — البطاقة داخل المظروف هي نسخة من البطاقة الحقيقية،
+     تخرج منه ثم تكبر حتى تطابق مكانها في الصفحة تماماً، فيتم التبديل
+     بينهما دون أي قفزة.
      ============================================================ */
   const scene = $("envelope-scene");
+  const stage = $("env-stage");
   const envelope = $("envelope");
+  const morph = $("morph");
+  const realCard = $("invitation");
+  const SLOT = { x: 0.09, y: 0.08, w: 0.82, h: 0.84 }; // موضع فتحة البطاقة داخل المظروف
+  const PAD = 140;                                      // هامش القصّ حتى لا يُقطع ظل البطاقة
+  const RADIUS = 24;
   let opened = false;
+  let geo = null;
+  let clone = null;
 
-  function openEnvelope() {
-    if (opened) return;
-    opened = true;
-    scene.classList.add("open");
-    envelope.setAttribute("aria-disabled", "true");
-    const delay = reduceMotion ? 0 : 1600;
-    setTimeout(() => {
-      root.classList.remove("pre-open");
-      root.classList.add("opened");
-      scene.classList.add("gone");
-      setTimeout(() => scene.remove(), 1000);
-    }, delay);
+  function buildClone() {
+    clone = realCard.cloneNode(true);
+    clone.removeAttribute("id");
+    clone.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
+    morph.replaceChildren(clone);
+    syncShimmer();
   }
+
+  // يحسب حجم النسخة وموضعها بحيث تظهر داخل فتحة المظروف بالضبط
+  function measure() {
+    if (opened || !clone) return;
+    const W = realCard.offsetWidth;
+    const ew = envelope.offsetWidth, eh = envelope.offsetHeight;
+    if (!W || !ew) return;
+    morph.style.width = W + "px";
+    const H = clone.offsetHeight;
+    const sx = ew * SLOT.x, sy = eh * SLOT.y, sw = ew * SLOT.w, sh = eh * SLOT.h;
+    const k = sw / W;
+    const B = H - sh / k;
+    geo = { sx, sy, sh, k, B };
+    morph.style.transform = "translate(" + sx + "px, " + sy + "px) scale(" + k + ")";
+    morph.style.clipPath = clip(B);
+    morph.style.opacity = "1";
+  }
+  function clip(bottom) {
+    return "inset(" + -PAD + "px " + -PAD + "px " + bottom + "px " + -PAD + "px round " + RADIUS + "px)";
+  }
+
+  function finish() {
+    root.classList.remove("pre-open");
+    root.classList.add("opened");
+    scene.remove();
+    morph.remove();
+    startPage();
+  }
+
+  // مزامنة لمعان الرقم بين النسخة والبطاقة الحقيقية حتى لا يقفز عند التبديل
+  function syncShimmer() {
+    try {
+      const a = realCard.querySelector(".day-num").getAnimations()[0];
+      const b = clone.querySelector(".day-num").getAnimations()[0];
+      if (a && b) b.startTime = a.startTime;
+    } catch (_) { /* لا شيء */ }
+  }
+
+  async function openEnvelope() {
+    if (opened) return;
+    measure();
+    opened = true;
+    envelope.setAttribute("aria-disabled", "true");
+    window.scrollTo(0, 0);
+
+    if (reduceMotion || !geo || typeof morph.animate !== "function") { finish(); return; }
+
+    const EASE_OUT = "cubic-bezier(0.2, 0.7, 0.2, 1)";
+    const EASE_IN = "cubic-bezier(0.5, 0, 0.9, 0.6)";
+    const EASE_MORPH = "cubic-bezier(0.7, 0, 0.2, 1)";
+    const fwd = (duration, easing, delay) => ({ duration, easing, delay: delay || 0, fill: "forwards" });
+
+    // 1) تثبيت حركة الطفو ثم إزالتها بهدوء حتى لا تقفز الإحداثيات
+    const current = getComputedStyle(stage).transform;
+    scene.classList.add("open");
+    stage.animate([{ transform: current }, { transform: "none" }], fwd(600, "ease-out"));
+
+    // 2) النصوص تختفي، الختم يذوب، الغطاء يُفتح (نصفان: أمامي حتى 90° ثم خلفي حتى 180°)
+    scene.querySelectorAll(".env-kicker, .env-to, .env-hint").forEach((el) =>
+      el.animate([{ opacity: 1 }, { opacity: 0 }], fwd(350, "ease")));
+    scene.querySelector(".env-seal").animate(
+      [{ transform: "scale(1) rotate(0deg)", opacity: 1 }, { transform: "scale(0) rotate(90deg)", opacity: 0 }],
+      fwd(420, EASE_IN));
+    scene.querySelector(".env-flap-front").animate(
+      [{ transform: "rotateX(0deg)" }, { transform: "rotateX(90deg)" }], fwd(320, EASE_IN, 60));
+    scene.querySelector(".env-flap-back").animate(
+      [{ transform: "rotateX(90deg)" }, { transform: "rotateX(180deg)" }], fwd(420, EASE_OUT, 380));
+
+    // 3) البطاقة تنزلق خارج المظروف
+    const { sx, sy, sh, k, B } = geo;
+    const y1 = -(sh + 14);
+    const rise = morph.animate(
+      [{ transform: "translate(" + sx + "px, " + sy + "px) scale(" + k + ")" },
+       { transform: "translate(" + sx + "px, " + y1 + "px) scale(" + k + ")" }],
+      fwd(950, EASE_OUT, 720));
+    await rise.finished;
+
+    // 4) المظروف يهبط ويتلاشى بينما البطاقة تكبر حتى تطابق مكانها الحقيقي في الصفحة.
+    //    تُنقل النسخة إلى طبقة ثابتة بإحداثيات الشاشة (أرقام صحيحة من بكسلات الجهاز)
+    //    حتى يكون التبديل النهائي مطابقاً تماماً بلا إزاحة أو ضبابية.
+    const cur = clone.getBoundingClientRect();
+    const x0 = cur.left, y0 = cur.top;
+    morph.style.transform = "translate(" + x0 + "px, " + y0 + "px) scale(" + k + ")";
+    morph.classList.add("morph-free");
+    document.body.appendChild(morph);
+    rise.cancel();
+    syncShimmer();
+
+    scene.querySelectorAll(".env-layer").forEach((layer) =>
+      layer.animate(
+        [{ transform: "translateY(0)", opacity: 1 }, { transform: "translateY(150px)", opacity: 0 }],
+        fwd(700, EASE_IN)));
+
+    const dpr = window.devicePixelRatio || 1;
+    const snap = (v) => Math.round(v * dpr) / dpr;
+    const cardRect = realCard.getBoundingClientRect();
+    const xf = snap(cardRect.left), yf = snap(cardRect.top);
+    const grow = morph.animate(
+      [{ transform: "translate(" + x0 + "px, " + y0 + "px) scale(" + k + ")", clipPath: clip(B) },
+       { transform: "translate(" + xf + "px, " + yf + "px) scale(1)", clipPath: clip(-PAD) }],
+      fwd(1500, EASE_MORPH));
+    await grow.finished;
+
+    // 5) التبديل: البطاقة الحقيقية في نفس المكان بالضبط
+    finish();
+  }
+
   envelope.addEventListener("click", openEnvelope);
   envelope.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEnvelope(); }
   });
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  // منع التمرير أثناء المظروف (خصوصاً على iOS) حتى تبقى الصفحة في موضعها
+  const block = (e) => { if (root.classList.contains("pre-open")) e.preventDefault(); };
+  scene.addEventListener("touchmove", block, { passive: false });
+  scene.addEventListener("wheel", block, { passive: false });
 
   /* ============================================================
      التاريخ الهجري
@@ -72,6 +188,12 @@
     }).format(CONFIG.start);
     $("hijri").textContent = hijri;
   } catch (_) { /* المتصفح لا يدعم التقويم الهجري */ }
+
+  buildClone();
+  measure();
+  window.addEventListener("resize", measure);
+  window.addEventListener("load", measure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
 
   /* ============================================================
      العدّاد التنازلي
@@ -236,40 +358,48 @@
   }
 
   /* ============================================================
-     ميلان البطاقة مع المؤشر (أجهزة الفأرة فقط)
+     ما بعد فتح المظروف: ميلان البطاقة، الظهور عند التمرير، شريط الجوال
      ============================================================ */
-  const card = $("invitation");
-  if (!reduceMotion && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-    card.addEventListener("pointermove", (e) => {
-      const r = card.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width - 0.5;
-      const py = (e.clientY - r.top) / r.height - 0.5;
-      card.style.setProperty("--rx", (px * 7).toFixed(2) + "deg");
-      card.style.setProperty("--ry", (-py * 7).toFixed(2) + "deg");
-      card.style.setProperty("--px", px.toFixed(3));
-      card.style.setProperty("--py", py.toFixed(3));
-    });
-    card.addEventListener("pointerleave", () => {
-      ["--rx", "--ry", "--px", "--py"].forEach((v) => card.style.removeProperty(v));
-    });
-  }
+  const card = realCard;
+  function startPage() {
+    if (!reduceMotion && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      card.addEventListener("pointermove", (e) => {
+        const r = card.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        card.style.setProperty("--rx", (px * 7).toFixed(2) + "deg");
+        card.style.setProperty("--ry", (-py * 7).toFixed(2) + "deg");
+        card.style.setProperty("--px", px.toFixed(3));
+        card.style.setProperty("--py", py.toFixed(3));
+      });
+      card.addEventListener("pointerleave", () => {
+        ["--rx", "--ry", "--px", "--py"].forEach((v) => card.style.removeProperty(v));
+      });
+    }
 
-  /* ============================================================
-     الظهور عند التمرير + شريط الجوال
-     ============================================================ */
-  if ("IntersectionObserver" in window) {
+    const reveals = Array.from(document.querySelectorAll(".reveal"));
+    if (!("IntersectionObserver" in window)) {
+      reveals.forEach((el) => el.classList.add("in"));
+      return;
+    }
+    // العناصر الظاهرة لحظة الفتح تظهر تباعاً بعد استقرار البطاقة
+    let i = 0;
+    reveals.forEach((el) => {
+      if (el.getBoundingClientRect().top < window.innerHeight) {
+        el.style.transitionDelay = (0.15 + i++ * 0.14).toFixed(2) + "s";
+        el.addEventListener("transitionend", () => { el.style.transitionDelay = ""; }, { once: true });
+      }
+    });
     const io = new IntersectionObserver((entries) => {
       entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } });
     }, { threshold: 0.15 });
-    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    reveals.forEach((el) => io.observe(el));
 
     const dock = $("dock");
     new IntersectionObserver((entries) => {
       const en = entries[0];
       dock.classList.toggle("show", !en.isIntersecting && en.boundingClientRect.top < 0);
     }, { threshold: 0 }).observe(card);
-  } else {
-    document.querySelectorAll(".reveal").forEach((el) => el.classList.add("in"));
   }
 
   /* ============================================================

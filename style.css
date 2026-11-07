@@ -72,24 +72,21 @@ svg { display: inline-block; }
   z-index: 50;
   place-items: center;
   padding: 24px;
-  background:
-    radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.7), transparent 60%),
-    linear-gradient(180deg, #efe7dc, #e2d6c7);
-  transition: opacity 0.9s ease, visibility 0.9s;
 }
-html.js.pre-open .envelope-scene,
-html.js .envelope-scene.open { display: grid; }
-.envelope-scene.gone { opacity: 0; visibility: hidden; pointer-events: none; }
-html.js.pre-open body { overflow: hidden; height: 100vh; }
+html.js .envelope-scene { display: grid; }
+html { scrollbar-gutter: stable; }
+html.js.pre-open { overflow: hidden; }
 html.js.pre-open .page, html.js.pre-open .dock { visibility: hidden; }
 
-.envelope-wrap {
+.env-stage {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
-  animation: fade 1s ease both;
+  animation: fade 1s ease both, float 4.5s ease-in-out 1s infinite;
 }
+.open .env-stage { animation: none; }
+
 .env-kicker {
   font-family: var(--font-verse);
   font-size: 1.35rem;
@@ -107,57 +104,78 @@ html.js.pre-open .page, html.js.pre-open .dock { visibility: hidden; }
 
 .envelope {
   position: relative;
-  width: min(360px, 86vw);
+  width: min(380px, 86vw, 78vh);
   aspect-ratio: 3 / 2;
   cursor: pointer;
-  perspective: 1400px;
-  animation: float 4.5s ease-in-out infinite;
   outline: none;
-  filter: drop-shadow(0 30px 40px rgba(90, 78, 53, 0.28));
+  -webkit-tap-highlight-color: transparent;
 }
-.envelope:focus-visible { outline: 3px solid var(--blush-deep); outline-offset: 10px; border-radius: 10px; }
-.open .envelope { animation: none; }
+.envelope:focus-visible .env-back { outline: 3px solid var(--blush-deep); outline-offset: 10px; }
+.envelope .env-seal { transition: transform 0.3s var(--ease-out); }
+.envelope:hover .env-seal { transform: scale(1.08); }
+
+.env-layer { position: absolute; inset: 0; perspective: 1400px; }
+.env-layer-back  { z-index: 1; }
+.env-layer-front { z-index: 3; pointer-events: none; }
+
+.morph {
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 2;
+  transform-origin: 0 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  will-change: transform, clip-path;
+}
+.morph .card { transform: none; transition: none; will-change: auto; }
+.morph.morph-free { position: fixed; left: 0; top: 0; z-index: 52; }
 
 .env-back {
-  position: absolute; inset: 0; z-index: 1;
+  position: absolute; inset: 0;
   background: var(--paper-env);
   border-radius: 10px;
+  box-shadow: 0 30px 50px rgba(90, 78, 53, 0.28), 0 4px 10px rgba(90, 78, 53, 0.1);
 }
-.env-card {
+.env-slot {
   position: absolute;
-  left: 7%; right: 7%; top: 8%; bottom: 8%;
-  z-index: 2;
-  background: var(--paper-light);
-  background-image: radial-gradient(ellipse at 50% 20%, #fff, transparent 70%);
-  border-radius: 6px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px;
-  transition: transform 1.1s var(--ease-out) 0.55s;
+  left: 9%; right: 9%; top: 8%; bottom: 8%;
+  background: var(--paper);
+  border-radius: 12px;
 }
-.env-card img { width: 26%; mix-blend-mode: multiply; }
-.env-card-name { font-family: var(--font-verse); font-weight: 700; font-size: 1.5rem; color: var(--ink-deep); line-height: 1.2; }
-.env-card small { font-size: 0.8rem; color: var(--ink-soft); }
 
-.env-pocket { position: absolute; inset: 0; z-index: 3; }
-.env-pocket-left   { background: linear-gradient(90deg, #ece2d4, #e6dbcc); clip-path: polygon(0 0, 50% 50%, 0 100%); }
-.env-pocket-right  { background: linear-gradient(270deg, #ece2d4, #e6dbcc); clip-path: polygon(100% 0, 50% 50%, 100% 100%); }
+.env-pocket { position: absolute; inset: 0; }
+.env-pocket-left   { background: linear-gradient(90deg, #ece2d4, #e6dbcc); clip-path: polygon(0 0, 50% 50%, 0 100%); border-radius: 10px 0 0 10px; }
+.env-pocket-right  { background: linear-gradient(270deg, #ece2d4, #e6dbcc); clip-path: polygon(100% 0, 50% 50%, 100% 100%); border-radius: 0 10px 10px 0; }
 .env-pocket-bottom { background: linear-gradient(180deg, #ede4d7, #f3ebe0); clip-path: polygon(0 100%, 50% 50%, 100% 100%); border-radius: 0 0 10px 10px; }
 
 .env-flap {
-  position: absolute; inset: 0; z-index: 4;
-  background: linear-gradient(180deg, #f0e8dc, #e8ded0);
+  position: absolute; inset: 0;
   clip-path: polygon(0 0, 100% 0, 50% 58%);
   border-radius: 10px 10px 0 0;
   transform-origin: top center;
-  transition: transform 0.75s cubic-bezier(0.4, 0, 0.2, 1), z-index 0s 0.75s;
 }
-.open .env-flap { transform: rotateX(180deg); z-index: 1; }
+.env-flap-front {
+  background: linear-gradient(180deg, #f1e9dd, #e7dccd);
+  overflow: hidden;
+}
+/* لمعة خفيفة تمر على الغطاء لجذب الانتباه */
+.env-flap-front::after {
+  content: "";
+  position: absolute; inset: -20%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.45) 50%, transparent 60%);
+  transform: translateX(-120%);
+  animation: sweep 5s ease-in-out 2s infinite;
+}
+.env-flap-back {
+  background: linear-gradient(0deg, #e3d8c8, #ece2d4 60%, #e8ddcd);
+  box-shadow: inset 0 -8px 16px rgba(111, 98, 67, 0.08);
+  transform: rotateX(90deg);
+}
 
 .env-seal {
   position: absolute; left: 50%; top: 55%;
   translate: -50% -50%;
-  z-index: 5;
   width: clamp(54px, 17%, 66px);
   aspect-ratio: 1;
   border-radius: 50%;
@@ -172,22 +190,24 @@ html.js.pre-open .page, html.js.pre-open .dock { visibility: hidden; }
   font-weight: 700;
   font-size: 1.8rem;
   line-height: 1;
-  transition: transform 0.45s ease, opacity 0.45s ease;
 }
 .env-seal::before {
   content: ""; position: absolute; inset: 6px; border-radius: 50%;
   border: 1.5px dashed rgba(255,255,255,0.5);
 }
+/* حلقة نبض حول الختم */
+.env-seal::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  border: 2px solid rgba(201, 142, 133, 0.6);
+  animation: ring 2.4s ease-out 1.5s infinite;
+}
 .env-seal span { translate: 0 -2px; }
-.open .env-seal { transform: scale(0) rotate(120deg); opacity: 0; }
-.open .env-card { transform: translateY(-80%); }
 
 .env-hint {
   font-size: 1rem;
   color: var(--ink-soft);
   animation: pulse 2.2s ease-in-out infinite;
 }
-.open .env-hint { opacity: 0; }
 
 /* ============================================================
    الصفحة
@@ -205,7 +225,6 @@ html.js.pre-open .page, html.js.pre-open .dock { visibility: hidden; }
 
 /* ===== بطاقة الدعوة ===== */
 .card-wrap { perspective: 1400px; }
-.opened .card-wrap { animation: rise 1.1s var(--ease-out) both; }
 
 .card {
   position: relative;
@@ -272,21 +291,6 @@ html.js.pre-open .page, html.js.pre-open .dock { visibility: hidden; }
   transition: transform 0.18s ease-out;
 }
 
-/* تتابع الظهور داخل البطاقة */
-.opened .card-content > * { animation: fade-up 0.9s var(--ease-out) both; }
-.opened .card-content > *:nth-child(1) { animation-delay: 0.35s; }
-.opened .card-content > *:nth-child(2) { animation-delay: 0.55s; }
-.opened .card-content > *:nth-child(3) { animation-delay: 0.75s; }
-.opened .card-content > *:nth-child(4) { animation-delay: 0.85s; }
-.opened .card-content > *:nth-child(5) { animation-delay: 0.95s; }
-.opened .card-content > *:nth-child(6) { animation-delay: 1.1s; }
-.opened .card-content > *:nth-child(7) { animation-delay: 1.25s; }
-.opened .verse p { animation: fade-up 0.8s var(--ease-out) both; }
-.opened .verse p:nth-child(1) { animation-delay: 0.6s; }
-.opened .verse p:nth-child(2) { animation-delay: 0.8s; }
-.opened .verse p:nth-child(3) { animation-delay: 1.0s; }
-.opened .verse p:nth-child(4) { animation-delay: 1.2s; }
-
 .bismillah {
   width: clamp(180px, 46%, 300px);
   height: auto;
@@ -332,8 +336,9 @@ html.js.pre-open .page, html.js.pre-open .dock { visibility: hidden; }
 }
 .when-day, .when-time {
   font-weight: 700;
-  font-size: clamp(1.1rem, 4.4vw, 1.6rem);
+  font-size: clamp(1rem, 4.4vw, 1.6rem);
   padding-top: 0.35em;
+  white-space: nowrap;
 }
 .when-day { justify-self: start; }
 .when-time { justify-self: end; font-variant-numeric: tabular-nums; }
@@ -570,13 +575,14 @@ html:not(.js) .divider { stroke-dashoffset: 0; }
 .toast.show { opacity: 1; transform: none; }
 
 /* ===== حركات ===== */
-@keyframes rise    { from { opacity: 0; transform: translateY(40px) scale(0.98); } to { opacity: 1; transform: none; } }
 @keyframes fade    { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes float   { 0%, 100% { transform: translateY(0) rotate(-0.4deg); } 50% { transform: translateY(-10px) rotate(0.4deg); } }
 @keyframes pulse   { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @keyframes flip    { from { transform: rotateX(-80deg); opacity: 0.2; } to { transform: none; opacity: 1; } }
+@keyframes sweep   { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes ring    { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.7); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
@@ -597,4 +603,5 @@ html:not(.js) .divider { stroke-dashoffset: 0; }
   body::after, #petals, .panel, .footer, .dock, .envelope-scene { display: none !important; }
   .card { box-shadow: none; transform: none; }
   html.js.pre-open .page { visibility: visible; }
+  .morph { display: none; }
 }
