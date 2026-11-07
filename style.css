@@ -1,0 +1,274 @@
+/* ===== ألوان وخطوط مستوحاة من بطاقة الدعوة ===== */
+:root {
+  --paper: #f6f1ec;
+  --paper-light: #faf6f2;
+  --paper-deep: #ebe2d7;
+  --ink: #6f6243;
+  --ink-soft: #8c7f62;
+  --olive: #a3a07a;
+  --blush: #e9c9c3;
+  --shadow: 0 18px 50px rgba(111, 98, 67, 0.16);
+  --radius: 22px;
+  --font-body: "Tajawal", "Noto Naskh Arabic", system-ui, sans-serif;
+  --font-verse: "Amiri", "Noto Naskh Arabic", serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper-deep);
+  background-image:
+    radial-gradient(ellipse at 15% 20%, rgba(255,255,255,0.55), transparent 55%),
+    radial-gradient(ellipse at 85% 80%, rgba(233,201,195,0.35), transparent 50%),
+    linear-gradient(180deg, #ede5da 0%, #e7ddd0 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ===== بطاقة الدعوة ===== */
+.card {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+  background-image:
+    radial-gradient(ellipse at 50% 35%, rgba(255,255,255,0.7), transparent 60%),
+    radial-gradient(ellipse at 20% 85%, rgba(255,255,255,0.4), transparent 50%);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  animation: rise 0.9s ease both;
+}
+
+.floral {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.floral-top {
+  top: 0;
+  height: 53.2%;                         /* 660 / 1240 نسبة عرض الصورة */
+  background-image: url("assets/floral-top.png");
+  background-position: top center;
+  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+}
+
+.floral-bottom {
+  bottom: 0;
+  height: 51.5%;                         /* 638 / 1240 */
+  background-image: url("assets/floral-bottom.png");
+  background-position: bottom center;
+  -webkit-mask-image: linear-gradient(0deg, #000 70%, transparent 100%);
+          mask-image: linear-gradient(0deg, #000 70%, transparent 100%);
+}
+
+.card-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 27% 11% 34%;
+  gap: clamp(8px, 2.2vw, 18px);
+}
+
+.bismillah {
+  width: clamp(180px, 46%, 300px);
+  height: auto;
+  mix-blend-mode: multiply;
+  margin-bottom: 4px;
+  animation: fade 1.2s ease 0.2s both;
+}
+
+.verse {
+  font-family: var(--font-verse);
+  font-size: clamp(0.95rem, 3.2vw, 1.25rem);
+  line-height: 1.9;
+  color: var(--ink-soft);
+  border: 0;
+  animation: fade 1.2s ease 0.4s both;
+}
+
+.bouquet {
+  width: clamp(72px, 20vw, 120px);
+  height: auto;
+  mix-blend-mode: multiply;
+  opacity: 0.95;
+  animation: fade 1.2s ease 0.5s both;
+}
+
+.invite-text {
+  font-weight: 400;
+  font-size: clamp(1.15rem, 4.6vw, 1.7rem);
+  line-height: 1.55;
+  color: var(--ink);
+  animation: fade 1.2s ease 0.6s both;
+}
+.invite-text span { display: block; }
+
+/* الموعد */
+.when {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+  animation: fade 1.2s ease 0.8s both;
+}
+.when-day {
+  font-weight: 700;
+  font-size: clamp(1.1rem, 4.4vw, 1.6rem);
+  justify-self: start;
+  padding-top: 0.35em;
+}
+.when-time {
+  font-weight: 700;
+  font-size: clamp(1.1rem, 4.4vw, 1.6rem);
+  justify-self: end;
+  padding-top: 0.35em;
+  font-variant-numeric: tabular-nums;
+}
+.when-date { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+.day-num {
+  font-weight: 700;
+  font-size: clamp(2.4rem, 9vw, 3.6rem);
+  letter-spacing: 0.02em;
+}
+.month { font-size: clamp(1rem, 3.6vw, 1.3rem); margin-top: 4px; }
+.year  { font-size: clamp(0.9rem, 3vw, 1.1rem); color: var(--ink-soft); margin-top: 2px; }
+
+/* المكان */
+.where {
+  margin-top: clamp(6px, 2vw, 16px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  animation: fade 1.2s ease 1s both;
+}
+.pin { width: clamp(26px, 6vw, 36px); height: auto; color: var(--ink); }
+.where p { font-weight: 700; font-size: clamp(1rem, 3.8vw, 1.35rem); }
+
+/* ===== اللوحات ===== */
+.panel {
+  background: var(--paper-light);
+  border: 1px solid rgba(111, 98, 67, 0.12);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(111, 98, 67, 0.08);
+  padding: 22px 20px;
+  animation: rise 0.9s ease 0.3s both;
+}
+.panel-title {
+  text-align: center;
+  font-weight: 500;
+  font-size: 1.15rem;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+  letter-spacing: 0.02em;
+}
+
+.countdown {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  direction: rtl;
+}
+.unit {
+  background: var(--paper);
+  border-radius: 16px;
+  padding: 14px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.num {
+  font-weight: 700;
+  font-size: clamp(1.6rem, 7vw, 2.4rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.lbl { font-size: 0.85rem; color: var(--ink-soft); }
+.countdown-done {
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  padding: 10px 0 2px;
+}
+
+/* ===== الأزرار ===== */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 12px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(111, 98, 67, 0.35);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.98rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn:hover, .btn:focus-visible { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(111,98,67,0.15); background: #fff; outline: none; }
+.btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn-primary:hover, .btn-primary:focus-visible { background: #5c5137; }
+
+.footer {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  padding-top: 6px;
+}
+
+/* ===== حركات ===== */
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ===== شاشات صغيرة ===== */
+@media (max-width: 400px) {
+  .actions { grid-template-columns: 1fr; }
+  .page { padding: 14px 10px 36px; }
+}
+
+/* ===== طباعة ===== */
+@media print {
+  body { background: #fff; }
+  .panel, .footer { display: none; }
+  .card { box-shadow: none; }
+}
